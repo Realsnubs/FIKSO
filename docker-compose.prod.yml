@@ -1,0 +1,63 @@
+# Production stack (example). PostgreSQL and object storage are managed services outside this file:
+# DATABASE_URL and the S3_* variables point at them. Secrets come from backend/.env.production (never in Git);
+# FIKSO_ENV_FILE points at another file (e.g. a staging or verification environment).
+# TLS terminates in front of `web` (load balancer / reverse proxy), which must set X-Forwarded-For.
+#
+# Networks: only `web` publishes a port. `api` is reachable from `web` (edge) and reaches the database and
+# providers (backend); `worker` and `migrate` are on `backend` only, so nothing from the edge can reach them.
+services:
+  migrate:
+    build: ./backend
+    env_file: ${FIKSO_ENV_FILE:-./backend/.env.production}
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    networks: [backend]
+
+  api:
+    build: ./backend
+    env_file: ${FIKSO_ENV_FILE:-./backend/.env.production}
+    environment:
+      WEB_CONCURRENCY: "2"
+      FORWARDED_ALLOW_IPS: "*"   # only `web` can reach this container on the internal network
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    expose: ["8000"]
+    networks: [edge, backend]
+    # The image's HEALTHCHECK probes /api/v1/health/live (process and database up).
+
+  worker:
+    build: ./backend
+    env_file: ${FIKSO_ENV_FILE:-./backend/.env.production}
+    command: ["python", "-m", "app.cli", "run-jobs", "--interval", "30"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks: [backend]
+    # The worker serves no HTTP: healthy while a pass has finished in the last 5 minutes.
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.cli", "worker-health", "--max-age-minutes", "5"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  web:
+    build: ./frontend
+    depends_on:
+      api:
+        condition: service_healthy
+    ports: ["8080:8080"]
+    restart: unless-stopped
+    networks: [edge]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  edge: {}
+  backend: {}

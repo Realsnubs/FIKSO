@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="lv">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#C04607" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0E3A3A" media="(prefers-color-scheme: dark)" />
+    <!-- Manrope, as on fiksoapp.eu (same Google Fonts request). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" />
+    <title>FIKSO</title>
+    <script>
+      // Apply a stored theme choice before the first paint (theme/theme.ts); otherwise the system theme applies.
+      try {
+        var theme = localStorage.getItem('fikso-theme')
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme
+        // The stored interface language (i18n/language.ts); Latvian otherwise.
+        var lang = localStorage.getItem('fikso-lang')
+        if (lang === 'en' || lang === 'ru') document.documentElement.lang = lang
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
