@@ -169,7 +169,7 @@ function serve(caps: Capabilities, override?: Override) {
     if (call.method === 'GET' && call.path === '/api/v1/master/capabilities') return json(caps)
     if (call.method === 'GET' && call.path === '/api/v1/master/catalogue') return json(CATALOGUE)
     if (call.method === 'GET' && call.path.startsWith('/api/v1/master/qualifications/')) {
-      return new Response(new Blob(['x'], { type: 'image/png' }), { status: 200, headers: { 'Content-Disposition': 'inline; filename="f.png"' } })
+      return new Response('x', { status: 200, headers: { 'Content-Type': 'image/png', 'Content-Disposition': 'inline; filename="f.png"' } })
     }
     if (call.method !== 'POST') return apiError(404, 'NOT_FOUND')
     if (!writable) return conflict('MASTER_PROFILE_REJECTED')

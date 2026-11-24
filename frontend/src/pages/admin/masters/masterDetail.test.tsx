@@ -825,7 +825,8 @@ describe('master card: documents', () => {
 
   function fileResponse(type: string, disposition: string) {
     return () =>
-      new Response(new Blob(['data'], { type }), {
+      // A string body: jsdom's Blob has no stream(), which Node 22's Response needs.
+      new Response('data', {
         status: 200,
         headers: { 'Content-Type': type, 'Content-Disposition': disposition },
       })
